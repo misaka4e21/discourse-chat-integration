@@ -11,7 +11,6 @@ module DiscourseChat::Provider::TelegramProvider
                        only: :command
 
     def command
-
       # If it's a new message (telegram also sends hooks for other reasons that we don't care about)
       if params.key?('message')
         chat_id = params['message']['chat']['id']
@@ -62,8 +61,11 @@ module DiscourseChat::Provider::TelegramProvider
 
       text_key = "unknown_chat" if channel.nil?
       # If slash commands disabled, send a generic message
-      text_key = "known_chat" if !SiteSetting.chat_integration_telegram_enable_slash_commands
-      text_key = "help" if message['text'].blank?
+      if SiteSetting.chat_integration_telegram_enable_slash_commands
+        text_key = "help" if message['text'].blank?
+      elsif message['text'].include?('chatid') or message['text'].include?('chat_id')
+        text_key = "known_chat"
+      end
 
       if text_key.present?
         return  I18n.t(
